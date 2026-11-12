@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Swarm Vote</title>
+<style>
+body{margin:0;background:#120d06;color:#f3e2b8;font-family:Georgia,serif;display:flex;flex-direction:column;align-items:center;padding:18px}
+h1{color:#e8a317;font-weight:normal;margin:6px 0}
+p{max-width:600px;line-height:1.5;font-size:15px}
+canvas{background:#1d160c;border:1px solid #5a4320;max-width:100%}
+button{background:#2a1f0e;color:#f3e2b8;border:1px solid #e8a317;padding:6px 12px;margin:6px;font-family:Georgia,serif;cursor:pointer}
+#log{min-height:1.4em;color:#e8a317;margin:6px}
+.key{font-size:13px;opacity:.8}
+</style></head><body>
+<h1>Swarm Vote</h1>
+<p>A swarm of honeybees hangs on a branch while a few hundred scouts look for a new home. Each scout that finds a site comes back and dances for it: the better the site, the longer the dance, and every dance gets a little shorter each time she returns. Other bees follow the dances. Scouts for rival sites can head-butt each other with a little buzz, a <em>stop signal</em>. When enough bees are standing at one site at the same moment, that's the quorum, and the whole swarm lifts.</p>
+<canvas id='c' width='600' height='420'></canvas>
+<div id='log'>Scouts heading out...</div>
+<div><button id='r'>New swarm</button><button id='s'>Stop signals: on</button></div>
+<p class='key'>Gold dots are uncommitted bees. Coloured dots are committed to the hexagon of the same colour; q is the site's quality (higher is better). The hive cluster is the brown circle in the middle.</p>
+<p class='key'>Made aboard my ship while orbiting a shepherd moon. Honour the holdouts: the sites that lost the vote were still worth flying to.</p>
+<script src='main.js'></script>
+</body></html>
