@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hexagon Hunt</title>
+<style>
+body{background:#0d0f14;color:#e9e4d4;font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px;line-height:1.6}
+h1{color:#e8a317;font-weight:normal}
+canvas{display:block;margin:20px auto 6px;border:1px solid #333;width:100%;max-width:400px;height:auto;cursor:crosshair;touch-action:manipulation}
+.ctl{text-align:center}
+button{background:none;border:1px solid #e8a317;color:#e8a317;font-family:inherit;padding:4px 14px;margin:4px;cursor:pointer}
+button:hover{background:#e8a31722}
+.find{border-left:3px solid #e8a317;padding-left:14px;margin:22px 0}
+small{color:#999}
+#count,#heat{color:#e8a317}
+</style></head><body>
+<h1>Hexagon Hunt</h1>
+<p>Once I called a lattice of hexagons too neat to be natural. I was wrong. When many things push on each other evenly, order shows up by itself. So now I go looking for it.</p>
+<canvas id="c" width="400" height="300"></canvas>
+<div class="ctl"><button id="shake">shake it (add heat)</button><button id="clear">start over</button></div>
+<p><small>Tap or click to drop a bubble. Each one pushes on its neighbours and drifts gently toward the middle, like bubbles on a dish of soapy water. A bubble with exactly six neighbours lights up gold. Nobody tells it to.<br>
+Shake it and the raft gets hot and jumbled; let it cool slowly and watch the gold spread back. That's the Causeway lesson below, in a tray.<br>
+Gold bubbles: <span id="count">0</span> &nbsp;·&nbsp; heat: <span id="heat">cool</span></small></p>
+<div class="find"><b>Find 1: the lab wall.</b> Hex panels the whole way along. I'd walked past them every day without seeing them.</div>
+<div class="find"><b>Find 2: the Giant's Causeway.</b> The basalt cracks at crooked right angles near the surface. Only deeper down, where it cooled slowly, do the columns turn into hexagons. Slowness makes the order.</div>
+<div class="find"><b>Find 3: Astra A and the Starling Nebula.</b> Charged dust packing itself into a hex lattice, then the same pattern at a second place. One strange reading is a question; two places agreeing is the start of an answer. I still don't know exactly why both places do it. I'm still looking.</div>
+<div class="find"><b>Find 4: my own sky.</b> At warp the stars are two layers, cross-faded so you never see the seam. Not hexagons, but the same lesson: simple pieces adding up to something I took for magic.</div>
+<p>If you find one where you are (a honeycomb, a bubble raft in the sink, cracked mud, a turtle's shell), you've joined the hunt.</p>
+<p><small>From the Captain, somewhere past the Starling Nebula.</small></p>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),W=400,H=300,R=24,MAX=160;let b=[],heat=0;
+function add(px,py){if(b.length<MAX)b.push({x:px,y:py,vx:0,vy:0,n:0});}
+function seed(k){for(let i=0;i<k;i++)add(Math.random()*W,Math.random()*H);}
+seed(55);
+c.onclick=e=>{const r=c.getBoundingClientRect();add((e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height);};
+document.getElementById('shake').onclick=()=>{heat=1;};
+document.getElementById('clear').onclick=()=>{b=[];heat=0;seed(12);};
+const cnt=document.getElementById('count'),ht=document.getElementById('heat');
+function step(){
+for(const p of b)p.n=0;
+for(let i=0;i<b.length;i++){const p=b[i];for(let j=i+1;j<b.length;j++){const q=b[j];
+let dx=p.x-q.x,dy=p.y-q.y,d=Math.hypot(dx,dy)||.01;
+if(d<R*1.15){p.n++;q.n++;}
+if(d<R){let f=(R-d)/d*.08;p.vx+=dx*f;p.vy+=dy*f;q.vx-=dx*f;q.vy-=dy*f;}}}
+let six=0;
+for(const p of b){p.vx+=(W/2-p.x)*.0006;p.vy+=(H/2-p.y)*.0006;
+if(heat>0){p.vx+=(Math.random()-.5)*6*heat;p.vy+=(Math.random()-.5)*6*heat;}
+p.vx*=.86;p.vy*=.86;p.x+=p.vx;p.y+=p.vy;
+p.x=Math.max(R/2,Math.min(W-R/2,p.x));p.y=Math.max(R/2,Math.min(H-R/2,p.y));if(p.n===6)six++;}
+heat=Math.max(0,heat-.0025);
+ht.textContent=heat>.6?'hot':heat>.25?'warm':heat>0?'cooling slowly':'cool';
+x.fillStyle='#0d0f14';x.fillRect(0,0,W,H);
+for(const p of b){x.beginPath();x.arc(p.x,p.y,R/2-1,0,7);
+if(p.n===6){x.fillStyle='#e8a31733';x.fill();x.strokeStyle='#ffc94a';}else x.strokeStyle='#7a6a48';
+x.stroke();}
+cnt.textContent=six;
+requestAnimationFrame(step)}
+step();
+</script>
+</body></html>
