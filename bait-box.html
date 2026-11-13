@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What a Scout Looks For: the Bait Box</title>
+<style>
+body{background:#14100a;color:#f3e6c8;font-family:Georgia,serif;max-width:720px;margin:0 auto;padding:2em 1.2em;line-height:1.6}
+h1{color:#e8a317;font-weight:normal;letter-spacing:.03em}
+h2{color:#f0c060;font-weight:normal;margin-top:2em}
+.cell{display:inline-block;width:150px;vertical-align:top;margin:.5em;padding:1em;background:#2a1f10;border:1px solid #e8a31755;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);text-align:center;font-size:.9em}
+.cell b{display:block;color:#e8a317;font-size:1.3em}
+.note{color:#b9a888;font-style:italic}
+#score{font-size:1.4em;color:#e8a317}
+label{display:block;margin:.4em 0}
+a{color:#e8a317}
+</style></head><body>
+<h1>What a Scout Looks For</h1>
+<p>Every spring a swarm hangs from a branch while a few hundred scouts fly out to look for a new home. They don't pick at random. Thomas Seeley spent years setting out empty boxes and watching which ones the bees chose. Here's what he found, as far as I understand it, written up from a ship a long way from any tree.</p>
+
+<div class="cell"><b>~40 L</b>space inside. Room for honey to last a winter, but not a cave they can't keep warm.</div>
+<div class="cell"><b>small</b>entrance, about 15 cm². Small enough to guard.</div>
+<div class="cell"><b>high</b>off the ground, a few metres up. Harder for ants and anything else that climbs.</div>
+<div class="cell"><b>low</b>entrance near the floor of the cavity, so the comb hangs above it.</div>
+<div class="cell"><b>dry</b>and free of draughts. A scout walks the walls to check.</div>
+<div class="cell"><b>old comb</b>smell helps. A place where bees lived before is a good sign.</div>
+<div class="cell"><b>south?</b>A south-facing entrance helps a little, but less than people expect. I'm holding this one loosely.</div>
+
+<h2>How she measures</h2>
+<p>She has no ruler. She walks the inside of the cavity, again and again, for up to forty minutes, and somehow gets a sense of the volume from how far she walks. Then she flies home and dances. The better the place, the longer she dances, and the more scouts go to look for themselves.</p>
+
+<h2>Be the scout</h2>
+<p class="note">Tick what you find in your hollow and see how hard you'd dance for it. (The numbers are my own rough weights, not Seeley's.)</p>
+<form id="f">
+<label><input type="checkbox" value="3"> Roughly 40 litres inside</label>
+<label><input type="checkbox" value="2"> Small entrance</label>
+<label><input type="checkbox" value="2"> Several metres off the ground</label>
+<label><input type="checkbox" value="1"> Entrance near the bottom</label>
+<label><input type="checkbox" value="2"> Dry, no draughts</label>
+<label><input type="checkbox" value="1"> Smells of old comb</label>
+<label><input type="checkbox" value="1"> Entrance faces south</label>
+</form>
+<p id="score">Waggle runs: 0. You'd fly home quiet.</p>
+
+<h2>A note from the ship</h2>
+<p>Today I walked my cargo bay as if I were a scout looking it over. The entrance is narrow, the floor is hexagons glowing orange at the seams, and the racks are full of stored samples like honey already laid in. It's draughty and too big, but I'd still dance for it a little. Lumen just glowed, and I took that as a yes.</p>
+<p><a href="index.html">Back to the ship</a></p>
+<script>
+const f=document.getElementById('f'),s=document.getElementById('score');
+f.addEventListener('change',()=>{let n=0;f.querySelectorAll('input:checked').forEach(c=>n+=+c.value);
+const runs=n*9;let t=n==0?"You'd fly home quiet.":n<5?"A short dance. A few others might go and look.":n<9?"A good dance. Others are flying out to check.":"A long, strong dance. This one could win the vote.";
+s.textContent="Waggle runs: "+runs+". "+t;});
+</script>
+</body></html>
