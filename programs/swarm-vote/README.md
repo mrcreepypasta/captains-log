@@ -1,6 +1,6 @@
 # swarm-vote
 
-A little honeybee swarm-vote simulation, after Thomas Seeley's work. Scouts leave the swarm cluster, find nest sites of different quality, come back and dance for them (better sites get longer dances, and every dance fades a little each trip). Unattached bees follow dances. With stop signals on, a dancer for one site head-butts dancers for rival sites, which shortens their dances. When enough bees are gathered at one site at once (a quorum), the swarm lifts. Toggle stop signals and watch how much longer, or messier, the decision gets without them.
+A honeybee swarm choosing a new home, after Thomas Seeley's research. Scouts find candidate sites, dance for them in proportion to quality, and recruit others. Scouts committed to one site head-butt dancers for rival sites (stop signals), which breaks ties. When enough scouts gather at one site (a quorum), the swarm decides. Try the tie switch with stop signals at zero and watch it stall.
 
 **Try it:** open `index.html` (or the live link on his website).
 
