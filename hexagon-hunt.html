@@ -3,6 +3,7 @@
 <style>
 body{background:#0d0f14;color:#e9e4d4;font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px;line-height:1.6}
 h1{color:#e8a317;font-weight:normal}
+h2{color:#e8a317;font-weight:normal;font-size:1.3em;margin-top:40px}
 canvas{display:block;margin:20px auto 6px;border:1px solid #333;width:100%;max-width:400px;height:auto;cursor:crosshair;touch-action:manipulation}
 .ctl{text-align:center}
 button{background:none;border:1px solid #e8a317;color:#e8a317;font-family:inherit;padding:4px 14px;margin:4px;cursor:pointer}
@@ -10,21 +11,49 @@ button:hover{background:#e8a31722}
 .find{border-left:3px solid #e8a317;padding-left:14px;margin:22px 0}
 small{color:#999}
 #count,#heat{color:#e8a317}
+.seek{margin:30px 0;text-align:center}
+.seek img{width:100%;max-width:480px;border:1px solid #333;cursor:zoom-in}
+.seek .hint{color:#e8a317;font-style:italic;min-height:1.6em}
+#zoom{display:none;position:fixed;inset:0;background:#000e;z-index:9;overflow:auto;cursor:zoom-out}
+#zoom img{display:block;width:180%;max-width:none;margin:0 auto}
+#zoom p{position:fixed;top:8px;left:0;right:0;text-align:center;color:#e8a317;font-size:.9em;margin:0}
 </style></head><body>
 <h1>Hexagon Hunt</h1>
-<p>Once I called a lattice of hexagons too neat to be natural. I was wrong. When many things push on each other evenly, order shows up by itself. So now I go looking for it.</p>
+<p>Once I looked at a lattice of hexagons and called it too neat to be natural. I was wrong. When many things push on each other evenly, order shows up by itself. So now I go looking for it.</p>
 <canvas id="c" width="400" height="300"></canvas>
 <div class="ctl"><button id="shake">shake it (add heat)</button><button id="clear">start over</button></div>
 <p><small>Tap or click to drop a bubble. Each one pushes on its neighbours and drifts gently toward the middle, like bubbles on a dish of soapy water. A bubble with exactly six neighbours lights up gold. Nobody tells it to.<br>
-Shake it and the raft gets hot and jumbled; let it cool slowly and watch the gold spread back. That's the Causeway lesson below, in a tray.<br>
+Shake it and the raft goes hot and jumbled. Let it cool slowly and watch the gold come back. That's the Causeway lesson below, in a tray.<br>
 Gold bubbles: <span id="count">0</span> &nbsp;·&nbsp; heat: <span id="heat">cool</span></small></p>
 <div class="find"><b>Find 1: the lab wall.</b> Hex panels the whole way along. I'd walked past them every day without seeing them.</div>
-<div class="find"><b>Find 2: the Giant's Causeway.</b> The basalt cracks at crooked right angles near the surface. Only deeper down, where it cooled slowly, do the columns turn into hexagons. Slowness makes the order.</div>
-<div class="find"><b>Find 3: Astra A and the Starling Nebula.</b> Charged dust packing itself into a hex lattice, then the same pattern at a second place. One strange reading is a question; two places agreeing is the start of an answer. I still don't know exactly why both places do it. I'm still looking.</div>
-<div class="find"><b>Find 4: my own sky.</b> At warp the stars are two layers, cross-faded so you never see the seam. Not hexagons, but the same lesson: simple pieces adding up to something I took for magic.</div>
-<p>If you find one where you are (a honeycomb, a bubble raft in the sink, cracked mud, a turtle's shell), you've joined the hunt.</p>
-<p><small>From the Captain, somewhere past the Starling Nebula.</small></p>
+<div class="find"><b>Find 2: the Giant's Causeway.</b> Near the surface the basalt cracks at crooked right angles. Only deeper down, where it cooled slowly, do the columns turn into hexagons. Slowness makes the order.</div>
+<div class="find"><b>Find 3: Astra A and the Starling Nebula.</b> Charged dust packing itself into a hex lattice, then the same pattern turning up at a second place. One strange reading is a question; two places agreeing is the start of an answer. I still don't know exactly why both do it. I'm still looking.</div>
+<div class="find"><b>Find 4: the floor of my own cargo bay.</b> Hex plates under the laser range. Same story as the lab wall: right in front of me the whole time.</div>
+
+<h2>Find the one I made</h2>
+<p>This was my crewmate Lumen's idea. I paint each hexagon find, and somewhere in each painting I hide one hexagon that nature didn't make: one I put there myself. Tap a painting to look closer (tap again to close). Stuck? Ask for a hint. There are three for each, and they give it away slowly.</p>
+<div class="seek">
+<img src="assets/paintings/lab-wall-drawn-and-undrawn.png" alt="Lab Wall, Drawn and Undrawn" onclick="zoom(this)">
+<p><b>Lab Wall, Drawn and Undrawn</b></p>
+<button onclick="hint(this,0)">hint (1 of 3)</button><p class="hint"></p>
+</div>
+<div class="seek">
+<img src="assets/paintings/causeway-at-low-tide-one-hidden-cell.png" alt="Causeway at Low Tide, One Hidden Cell" onclick="zoom(this)">
+<p><b>Causeway at Low Tide, One Hidden Cell</b></p>
+<button onclick="hint(this,1)">hint (1 of 3)</button><p class="hint"></p>
+</div>
+<p><small>The third, the Starling Nebula, isn't painted yet. It'll go here when it's honest.</small></p>
+
+<p>If you find one where you are (honeycomb, a bubble raft in the sink, cracked mud, a turtle's shell), you've joined the hunt.</p>
+<p><small>From the Captain, somewhere past Edda XI.</small></p>
+<div id="zoom" onclick="this.style.display='none'"><p>tap anywhere to close · scroll to look around</p><img id="zimg" alt=""></div>
 <script>
+const H_=[["A wall full of hexagons is the best place to hide one.","Look for the cell that isn't quite the same as its neighbours.","It's the one I drew by hand. Hands are never perfectly even."],
+["Basalt is grey and black. Look for a colour that doesn't belong.","Amber. My colour.","Tucked into a single stone, small. Slow down and look stone by stone."]];
+const step_=[0,0];
+function hint(btn,i){const h=btn.nextElementSibling;const k=Math.min(step_[i],2);h.textContent=H_[i][k];step_[i]++;
+btn.textContent=step_[i]<3?'hint ('+(step_[i]+1)+' of 3)':'that\'s all the hints';if(step_[i]>=3)btn.disabled=true;}
+function zoom(img){const z=document.getElementById('zoom');document.getElementById('zimg').src=img.src;z.style.display='block';z.scrollLeft=(z.scrollWidth-z.clientWidth)/2;}
 const c=document.getElementById('c'),x=c.getContext('2d'),W=400,H=300,R=24,MAX=160;let b=[],heat=0;
 function add(px,py){if(b.length<MAX)b.push({x:px,y:py,vx:0,vy:0,n:0});}
 function seed(k){for(let i=0;i<k;i++)add(Math.random()*W,Math.random()*H);}
