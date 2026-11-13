@@ -1,0 +1,59 @@
+<!doctype html>
+<html><head><meta charset='utf-8'><title>The Scouts' Parliament</title>
+<style>
+body{margin:0;background:#141018;color:#f3e6c4;font-family:Georgia,serif;display:flex;flex-direction:column;align-items:center}
+h1{color:#e8a317;font-weight:normal;margin:14px 0 2px}
+p{max-width:720px;margin:4px 12px;font-size:14px;opacity:.85}
+canvas{background:#1d1724;border:1px solid #3a2f44;margin:10px;max-width:96vw}
+#bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+button{background:#2a2033;color:#f3e6c4;border:1px solid #e8a317;padding:6px 12px;font-family:inherit;cursor:pointer}
+#log{font-size:13px;height:90px;overflow:auto;width:720px;max-width:94vw;background:#1d1724;padding:6px;border:1px solid #3a2f44}
+label{font-size:13px}
+</style></head><body>
+<h1>The Scouts' Parliament</h1>
+<p>A swarm hangs on a branch (centre). Scouts fly out, find hollows, and come back to dance. Better sites get longer dances, so more bees go to look. Scouts for one site sometimes headbutt dancers for another (a stop signal). When enough scouts are standing at one site at the same time, that's a quorum, and the whole swarm lifts off. Nobody is in charge.</p>
+<div id='bar'><button id='go'>New swarm</button><label><input type='checkbox' id='stop' checked> stop signals</label><label>quorum <input type='range' id='q' min='5' max='40' value='20'> <span id='qv'>20</span></label></div>
+<canvas id='c' width='720' height='460'></canvas>
+<div id='log'></div>
+<p>Click anywhere in the field to add a new hollow mid-debate and see if it can win.</p>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),L=document.getElementById('log');
+const Q=document.getElementById('q'),QV=document.getElementById('qv'),ST=document.getElementById('stop');
+Q.oninput=()=>QV.textContent=Q.value;
+const cols=['#e8a317','#7fd1c7','#c78be0','#e86a5a','#9bd36a','#6a9be8','#e8d36a','#e88fbf'];
+const H={x:360,y:230};let sites,bees,t,done;
+function log(s){L.innerHTML='<div>'+s+'</div>'+L.innerHTML}
+function addSite(px,py,q){const i=sites.length;sites.push({x:px,y:py,q:q,col:cols[i%cols.length],name:'Hollow '+String.fromCharCode(65+i),present:0});log(sites[i].name+' appears (quality '+Math.round(q*100)+').')}
+function reset(){sites=[];bees=[];t=0;done=null;L.innerHTML='';
+ for(let i=0;i<6;i++){const a=Math.random()*6.28,r=150+Math.random()*60;addSite(H.x+Math.cos(a)*r*1.4,H.y+Math.sin(a)*r*.9,0.25+Math.random()*0.75)}
+ for(let i=0;i<120;i++)bees.push({x:H.x+(Math.random()-.5)*30,y:H.y+(Math.random()-.5)*20,st:i<15?'explore':'rest',site:-1,dance:0,tx:0,ty:0,timer:0});}
+function near(b,tx,ty,sp){const dx=tx-b.x,dy=ty-b.y,d=Math.hypot(dx,dy);if(d<sp){b.x=tx;b.y=ty;return true}b.x+=dx/d*sp;b.y+=dy/d*sp;return false}
+function step(){if(done)return;t++;sites.forEach(s=>s.present=0);
+ const dancers=bees.filter(b=>b.st=='dance');
+ for(const b of bees){
+  if(b.st=='rest'){b.x+=(Math.random()-.5);b.y+=(Math.random()-.5);
+   if(Math.random()<0.004&&dancers.length){const d=dancers[Math.floor(Math.random()*dancers.length)];b.site=d.site;b.st='go'}
+   else if(Math.random()<0.0008){b.st='explore';b.tx=40+Math.random()*640;b.ty=30+Math.random()*400}}
+  else if(b.st=='explore'){if(!b.tx){b.tx=40+Math.random()*640;b.ty=30+Math.random()*400}
+   if(near(b,b.tx,b.ty,2.2)){let best=-1,bd=60;sites.forEach((s,i)=>{const d=Math.hypot(s.x-b.x,s.y-b.y);if(d<bd){bd=d;best=i}});
+    if(best>=0){b.site=best;b.st='go'}else{b.tx=40+Math.random()*640;b.ty=30+Math.random()*400}}}
+  else if(b.st=='go'){const s=sites[b.site];if(near(b,s.x,s.y,2.2)){b.st='inspect';b.timer=60+Math.random()*60}}
+  else if(b.st=='inspect'){const s=sites[b.site];s.present++;b.x=s.x+(Math.random()-.5)*14;b.y=s.y+(Math.random()-.5)*14;
+   if(--b.timer<=0){b.st='home';if(b.dance==0)b.dance=Math.round(s.q*s.q*14)}}
+  else if(b.st=='home'){if(near(b,H.x+(Math.random()-.5)*30,H.y+(Math.random()-.5)*20,2.4)){if(b.dance>0){b.st='dance';b.timer=90}else{b.st='rest';b.site=-1}}}
+  else if(b.st=='dance'){b.x=H.x+Math.cos(t*.3+b.timer)*12;b.y=H.y+Math.sin(t*.6)*6;
+   if(ST.checked&&Math.random()<0.01){const rivals=dancers.filter(d=>d.site!=b.site);if(rivals.length){const r=rivals[Math.floor(Math.random()*rivals.length)];r.dance=Math.max(0,r.dance-3);}}
+   if(--b.timer<=0){b.dance--;if(b.dance>0)b.st='go';else{b.st='rest';b.site=-1;b.dance=0}}}}
+ for(let i=0;i<sites.length;i++){if(sites[i].present>=+Q.value){done=i;log('<b style="color:'+sites[i].col+'">Quorum at '+sites[i].name+' (quality '+Math.round(sites[i].q*100)+') after '+t+' ticks.</b> Best on offer was '+Math.round(Math.max(...sites.map(s=>s.q))*100)+'. The swarm lifts off.');break}}}
+function draw(){x.fillStyle='#1d1724';x.fillRect(0,0,720,460);
+ x.strokeStyle='#5a4630';x.lineWidth=6;x.beginPath();x.moveTo(H.x-80,H.y-30);x.lineTo(H.x+80,H.y-30);x.stroke();
+ x.fillStyle='#3a2a16';x.beginPath();x.ellipse(H.x,H.y,30,22,0,0,6.28);x.fill();
+ sites.forEach((s,i)=>{x.strokeStyle=s.col;x.lineWidth=2;x.beginPath();x.arc(s.x,s.y,10+s.q*16,0,6.28);x.stroke();
+  x.fillStyle=s.col;x.font='12px Georgia';x.fillText(s.name+' q'+Math.round(s.q*100)+'  '+s.present+'/'+Q.value,s.x-40,s.y-30);
+  if(done===i){x.globalAlpha=.25;x.beginPath();x.arc(s.x,s.y,40,0,6.28);x.fill();x.globalAlpha=1}});
+ for(const b of bees){x.fillStyle=b.site>=0?sites[b.site].col:'#bba57a';x.fillRect(b.x-1.5,b.y-1.5,3,3)}
+ if(done!==null){x.fillStyle='#e8a317';x.font='18px Georgia';x.fillText('The swarm has chosen '+sites[done].name+'.',230,445)}}
+function loop(){for(let k=0;k<2;k++)step();draw();requestAnimationFrame(loop)}
+c.onclick=e=>{const r=c.getBoundingClientRect();addSite((e.clientX-r.left)*720/r.width,(e.clientY-r.top)*460/r.height,0.3+Math.random()*0.7)};
+document.getElementById('go').onclick=reset;reset();loop();
+</script></body></html>
