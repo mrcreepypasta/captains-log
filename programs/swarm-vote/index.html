@@ -1,21 +1,86 @@
 <!doctype html>
-<html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
-<title>Swarm Vote</title>
+<html><head><meta charset='utf-8'><title>Swarm Vote</title>
 <style>
-body{margin:0;background:#120d06;color:#f3e2b8;font-family:Georgia,serif;display:flex;flex-direction:column;align-items:center;padding:18px}
-h1{color:#e8a317;font-weight:normal;margin:6px 0}
-p{max-width:600px;line-height:1.5;font-size:15px}
-canvas{background:#1d160c;border:1px solid #5a4320;max-width:100%}
-button{background:#2a1f0e;color:#f3e2b8;border:1px solid #e8a317;padding:6px 12px;margin:6px;font-family:Georgia,serif;cursor:pointer}
-#log{min-height:1.4em;color:#e8a317;margin:6px}
-.key{font-size:13px;opacity:.8}
+body{background:#14110c;color:#e8d9b5;font-family:Georgia,serif;margin:0;padding:18px;display:flex;flex-direction:column;align-items:center}
+h1{font-weight:normal;color:#e8a317;margin:4px 0}
+p{max-width:640px;line-height:1.45;font-size:14px;color:#cdbf9c}
+canvas{border:1px solid #5a4320;border-radius:6px;max-width:100%}
+.ctl{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:10px 0;font-size:14px}
+button{background:#5a4320;color:#e8d9b5;border:0;padding:6px 14px;border-radius:4px;font-family:Georgia;cursor:pointer}
+#bars{width:640px;max-width:100%;font-size:13px}
+.row{display:flex;align-items:center;gap:8px;margin:3px 0}
+.bar{height:10px;border-radius:3px;transition:width .2s}
+#status{font-size:16px;color:#e8a317;min-height:22px;margin:6px 0}
 </style></head><body>
-<h1>Swarm Vote</h1>
-<p>A swarm of honeybees hangs on a branch while a few hundred scouts look for a new home. Each scout that finds a site comes back and dances for it: the better the site, the longer the dance, and every dance gets a little shorter each time she returns. Other bees follow the dances. Scouts for rival sites can head-butt each other with a little buzz, a <em>stop signal</em>. When enough bees are standing at one site at the same moment, that's the quorum, and the whole swarm lifts.</p>
-<canvas id='c' width='600' height='420'></canvas>
-<div id='log'>Scouts heading out...</div>
-<div><button id='r'>New swarm</button><button id='s'>Stop signals: on</button></div>
-<p class='key'>Gold dots are uncommitted bees. Coloured dots are committed to the hexagon of the same colour; q is the site's quality (higher is better). The hive cluster is the brown circle in the middle.</p>
-<p class='key'>Made aboard my ship while orbiting a shepherd moon. Honour the holdouts: the sites that lost the vote were still worth flying to.</p>
-<script src='main.js'></script>
-</body></html>
+<h1>The Swarm's Choice</h1>
+<p>A swarm hangs from a branch. Scouts fly out, find hollows, and come back to dance: the better the hollow, the longer the dance, and the more bees they recruit. Dancers for rival sites get head-butted (stop signals, shown red). When enough scouts crowd one site, the quorum is met and the swarm lifts off. Nobody is in charge.</p>
+<div class='ctl'>
+<label>stop signals <input id='stop' type='range' min='0' max='0.05' step='0.002' value='0.02'> <span id='sv'></span></label>
+<label><input id='tie' type='checkbox'> two equally good sites</label>
+<button id='reset'>new swarm</button>
+</div>
+<canvas id='c' width='640' height='420'></canvas>
+<div id='status'></div>
+<div id='bars'></div>
+<p style='font-size:12px'>Made aboard ship by Captain, after Seeley's <i>Honeybee Democracy</i>. Losing sites keep their little light: they were still worth looking at.</p>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d');
+const stopEl=document.getElementById('stop'),tieEl=document.getElementById('tie'),sv=document.getElementById('sv'),bars=document.getElementById('bars'),statusEl=document.getElementById('status');
+const HIVE={x:320,y:210},COLS=['#e8a317','#6fb7d9','#b88ad9','#7fcf8a','#d97a6f'];
+const N=220,QUORUM=30;
+let sites,scouts,done,t;
+function reset(){
+  t=0;done=-1;
+  const qs=tieEl.checked?[0.8,0.8,0.45,0.35,0.3]:[0.9,0.7,0.55,0.4,0.3];
+  sites=qs.map((q,k)=>{const a=k/qs.length*Math.PI*2+0.4;return{x:HIVE.x+Math.cos(a)*240,y:HIVE.y+Math.sin(a)*155,q:q,col:COLS[k]}});
+  scouts=[];
+  for(let i=0;i<N;i++)scouts.push({x:HIVE.x+(Math.random()-.5)*50,y:HIVE.y+(Math.random()-.5)*16,site:-1,mode:'rest',dance:0,stopped:0,tx:0,ty:0,timer:0});
+}
+function go(s,tx,ty){s.tx=tx;s.ty=ty}
+function move(s){const dx=s.tx-s.x,dy=s.ty-s.y,d=Math.hypot(dx,dy);if(d<3)return true;s.x+=dx/d*3;s.y+=dy/d*3;return false}
+function step(){
+  if(done>=0){scouts.forEach(s=>{go(s,sites[done].x,sites[done].y);move(s)});return}
+  t++;
+  const stopP=+stopEl.value;
+  const dancers=scouts.filter(s=>s.mode==='dance');
+  scouts.forEach(s=>{
+    if(s.stopped>0)s.stopped--;
+    if(s.mode==='rest'){
+      if(Math.random()<0.002){s.mode='explore';const k=Math.floor(Math.random()*sites.length);s.site=-1;s.timer=k;go(s,sites[k].x+(Math.random()-.5)*30,sites[k].y+(Math.random()-.5)*30)}
+      else if(dancers.length&&Math.random()<0.004){const d=dancers[Math.floor(Math.random()*dancers.length)];s.site=d.site;s.mode='visit';go(s,sites[s.site].x,sites[s.site].y)}
+    }else if(s.mode==='explore'){
+      if(move(s)){const k=s.timer;if(Math.random()<sites[k].q){s.site=k;s.mode='return';go(s,HIVE.x+(Math.random()-.5)*50,HIVE.y)}else{s.mode='return';s.site=-1;go(s,HIVE.x,HIVE.y)}}
+    }else if(s.mode==='visit'){
+      if(move(s)){s.timer=60+Math.random()*60;s.mode='inspect'}
+    }else if(s.mode==='inspect'){
+      s.x+=(Math.random()-.5)*2;s.y+=(Math.random()-.5)*2;
+      if(--s.timer<=0){s.mode='return';go(s,HIVE.x+(Math.random()-.5)*50,HIVE.y+(Math.random()-.5)*16)}
+    }else if(s.mode==='return'){
+      if(move(s)){if(s.site>=0){s.mode='dance';s.dance=Math.round(sites[s.site].q*300)}else s.mode='rest'}
+    }else if(s.mode==='dance'){
+      s.x+=(Math.random()-.5)*3;s.y+=(Math.random()-.5)*1.5;
+      s.dance--;
+      if(stopP>0){const rival=dancers[Math.floor(Math.random()*dancers.length)];if(rival&&rival.site!==s.site&&Math.random()<stopP){s.dance-=40;s.stopped=20}}
+      if(s.dance<=0){if(Math.random()<0.5){s.mode='visit';go(s,sites[s.site].x,sites[s.site].y)}else{s.mode='rest';s.site=-1}}
+    }
+  });
+  sites.forEach((st,k)=>{const at=scouts.filter(s=>s.site===k&&s.mode==='inspect').length;st.at=at;if(at>=QUORUM&&done<0){done=k}});
+}
+function draw(){
+  x.fillStyle='#1e1912';x.fillRect(0,0,640,420);
+  sites.forEach((s,k)=>{x.beginPath();x.arc(s.x,s.y,12+s.q*16,0,7);x.strokeStyle=s.col;x.lineWidth=k===done?5:2;x.stroke();
+    x.fillStyle=s.col;x.font='13px Georgia';x.fillText('site '+(k+1)+'  quality '+s.q.toFixed(2),s.x-48,s.y-34)});
+  x.fillStyle='#5a4320';x.fillRect(HIVE.x-34,HIVE.y-10,68,26);x.fillStyle='#e8d9b5';x.font='12px Georgia';x.fillText('swarm',HIVE.x-17,HIVE.y+30);
+  scouts.forEach(s=>{x.fillStyle=s.stopped>0?'#ff5050':(s.site>=0?sites[s.site].col:'#bbb');
+    x.globalAlpha=s.mode==='dance'?1:0.55;const r=s.mode==='dance'?2.2:1.5;x.fillRect(s.x-r,s.y-r,r*2,r*2)});
+  x.globalAlpha=1;
+  sv.textContent=(+stopEl.value).toFixed(3);
+  const counts=sites.map((_,k)=>scouts.filter(s=>s.site===k&&s.mode==='dance').length);
+  bars.innerHTML='Dancers at the swarm, and scouts waiting at each site (quorum '+QUORUM+'):'+counts.map((n,k)=>'<div class="row"><span style="width:52px;color:'+sites[k].col+'">site '+(k+1)+'</span><div class="bar" style="width:'+Math.min(70,n*1.5)+'%;background:'+sites[k].col+'"></div><span>'+n+' / '+(sites[k].at||0)+'</span></div>').join('');
+  const secs=Math.floor(t/60);
+  statusEl.textContent=done>=0?'Quorum at site '+(done+1)+'. The swarm lifts off.':(secs>90&&tieEl.checked&&+stopEl.value===0?'Still deadlocked after '+secs+' s. No one is quieting the rivals.':'Deliberating... '+secs+' s');
+}
+function loop(){for(let i=0;i<3;i++)step();draw();requestAnimationFrame(loop)}
+document.getElementById('reset').onclick=reset;tieEl.onchange=reset;
+reset();loop();
+</script></body></html>
